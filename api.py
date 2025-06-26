@@ -1,29 +1,28 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from bullmoney import BotIQ  # seu bot operacional
+from bullmoney import BotIQ
+import os
 
 app = Flask(__name__)
 CORS(app)
-
 bot = BotIQ()
 
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
-    if bot.login(data.get("email"), data.get("senha"), data.get("real", False)):
+    if bot.login(data["email"], data["senha"], data.get("real", False)):
         return jsonify({"status": "conectado"})
     return jsonify({"status": "erro"}), 401
 
 @app.route("/start", methods=["POST"])
 def start():
     d = request.get_json()
-    # Forçando EURUSD-OTC (se quiser fixo)
     bot.iniciar(
-        valor_entrada=d.get("valor", 2),
-        meta=d.get("meta", 10),
-        stop=d.get("derrotas", 3),
-        max_gale=d.get("max_mg", 1),
-        martingale=d.get("martingale", False)
+        d["valor"],
+        d.get("meta", 0),
+        d.get("derrotas", 0),
+        d.get("max_mg", 0),
+        d.get("martingale", False)
     )
     return jsonify({"status": "iniciado"})
 
@@ -37,4 +36,5 @@ def status():
     return jsonify(bot.status())
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
