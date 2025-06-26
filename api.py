@@ -1,28 +1,34 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from bullmoney import BotIQ
-import os
 
 app = Flask(__name__)
 CORS(app)
+
 bot = BotIQ()
 
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
-    if bot.login(data["email"], data["senha"], data.get("real", False)):
+    email = data.get("email")
+    senha = data.get("senha")
+    real = data.get("real", False)
+    sucesso = bot.login(email, senha, real)
+    # responda "conectado" pra acompanhar no Flutter
+    if sucesso:
         return jsonify({"status": "conectado"})
     return jsonify({"status": "erro"}), 401
 
 @app.route("/start", methods=["POST"])
 def start():
-    d = request.get_json()
+    data = request.get_json()
     bot.iniciar(
-        d["valor"],
-        d.get("meta", 0),
-        d.get("derrotas", 0),
-        d.get("max_mg", 0),
-        d.get("martingale", False)
+        valor_entrada=data.get("valor", 2),
+        meta=data.get("meta", 10),
+        stop=data.get("derrotas", 3),
+        max_gale=data.get("max_mg", 1),
+        martingale=data.get("martingale", False),
+        # você envia "ativo" do Flutter mas o backend ignora; foco em EURUSD-OTC
     )
     return jsonify({"status": "iniciado"})
 
@@ -33,11 +39,17 @@ def stop():
 
 @app.route("/status", methods=["GET"])
 def status():
-    return jsonify(bot.status())
-
-import os
+    st = bot.status()
+    # retorna os campos que o Flutter espera
+    return jsonify({
+        "lucro": st.get("lucro", 0),
+        "vitorias": st.get("vitorias", 0),
+        "derrotas": st.get("derrotas", 0),
+        "ativo": st.get("ativo", "")
+    })
 
 if __name__ == "__main__":
+    # na Render, a porta será dada pela variável PORT; mas localmente use 5000
+    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
