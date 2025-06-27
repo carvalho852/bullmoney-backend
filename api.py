@@ -14,7 +14,7 @@ def login():
     senha = data.get("senha")
     real = data.get("real", False)
     sucesso = bot.login(email, senha, real)
-    # responda "conectado" pra acompanhar no Flutter
+    print(f"[LOGIN] Tentando login com {email} | Sucesso: {sucesso}")
     if sucesso:
         return jsonify({"status": "conectado"})
     return jsonify({"status": "erro"}), 401
@@ -28,7 +28,7 @@ def start():
         stop=data.get("derrotas", 3),
         max_gale=data.get("max_mg", 1),
         martingale=data.get("martingale", False),
-        # você envia "ativo" do Flutter mas o backend ignora; foco em EURUSD-OTC
+        ativo=data.get("ativo", "EURUSD-OTC")
     )
     return jsonify({"status": "iniciado"})
 
@@ -40,7 +40,6 @@ def stop():
 @app.route("/status", methods=["GET"])
 def status():
     st = bot.status()
-    # retorna os campos que o Flutter espera
     return jsonify({
         "lucro": st.get("lucro", 0),
         "vitorias": st.get("vitorias", 0),
@@ -49,7 +48,6 @@ def status():
     })
 
 if __name__ == "__main__":
-    # na Render, a porta será dada pela variável PORT; mas localmente use 5000
     import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
