@@ -14,7 +14,7 @@ def login():
     senha = data.get("senha")
     real = data.get("real", False)
     sucesso = bot.login(email, senha, real)
-    print(f"[LOGIN] Tentando login com {email} | Sucesso: {sucesso}")
+
     if sucesso:
         return jsonify({"status": "conectado"})
     return jsonify({"status": "erro"}), 401
@@ -27,8 +27,8 @@ def start():
         meta=data.get("meta", 10),
         stop=data.get("derrotas", 3),
         max_gale=data.get("max_mg", 1),
-        martingale=data.get("martingale", False),
-        ativo=data.get("ativo", "EURUSD-OTC")
+        martingale=data.get("martingale", False)
+        
     )
     return jsonify({"status": "iniciado"})
 
@@ -41,10 +41,10 @@ def stop():
 def status():
     st = bot.status()
     return jsonify({
-        "lucro": st.get("lucro", 0),
+        "lucro_total": st.get("lucro_total", 0),
         "vitorias": st.get("vitorias", 0),
         "derrotas": st.get("derrotas", 0),
-        "ativo": st.get("ativo", "")
+        "ultima_ordem": st.get("ultima_ordem", "")
     })
 
 if __name__ == "__main__":
