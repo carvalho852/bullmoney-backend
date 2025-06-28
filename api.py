@@ -28,7 +28,6 @@ def start():
         stop=data.get("derrotas", 3),
         max_gale=data.get("max_mg", 1),
         martingale=data.get("martingale", False)
-        
     )
     return jsonify({"status": "iniciado"})
 
@@ -41,7 +40,7 @@ def stop():
 def status():
     st = bot.status()
     return jsonify({
-        "lucro_total": st.get("lucro_total", 0),
+        "lucro": st.get("lucro", 0),              # ✅ Corrigido aqui
         "vitorias": st.get("vitorias", 0),
         "derrotas": st.get("derrotas", 0),
         "ultima_ordem": st.get("ultima_ordem", "")
