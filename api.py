@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from bullmoney import BotIQ
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -39,13 +40,12 @@ def stop():
 def status():
     st = bot.status()
     return jsonify({
-        "lucro_total": st.get("lucro_total", 0),
+        "lucro_total": st.get("lucro_total", 0),  # ✅ nome correto
         "vitorias": st.get("vitorias", 0),
         "derrotas": st.get("derrotas", 0),
         "ultima_ordem": st.get("ultima_ordem", "")
     })
 
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
