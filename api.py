@@ -14,7 +14,6 @@ def login():
     senha = data.get("senha")
     real = data.get("real", False)
     sucesso = bot.login(email, senha, real)
-
     if sucesso:
         return jsonify({"status": "conectado"})
     return jsonify({"status": "erro"}), 401
@@ -40,7 +39,7 @@ def stop():
 def status():
     st = bot.status()
     return jsonify({
-        "lucro": st.get("lucro", 0),              # ✅ Corrigido aqui
+        "lucro_total": st.get("lucro_total", 0),
         "vitorias": st.get("vitorias", 0),
         "derrotas": st.get("derrotas", 0),
         "ultima_ordem": st.get("ultima_ordem", "")
