@@ -27,9 +27,9 @@ class BotIQ:
         self.derrotas = 0
         self.ultima_ordem = ""
         self.ativo = "EURUSD-OTC"
-        self.data_collector = DataCollector() # Inicializa o coletor de dados
-        self.feature_engineer = FeatureEngineer() # Inicializa o engenheiro de features
-        self.ai_model = AIModel() # Inicializa o modelo de IA
+        self.data_collector = DataCollector()
+        self.feature_engineer = FeatureEngineer()
+        self.ai_model = AIModel()
 
     def login(self, email, senha, conta_real):
         self.api = IQ_Option(email, senha)
@@ -57,7 +57,6 @@ class BotIQ:
         self.derrotas = 0
         self.parar = False
 
-        # Treinar o modelo de IA antes de iniciar as operações
         print("[🧠] Treinando o modelo de IA... Isso pode levar um tempo.")
         self.ai_model.train_model(asset=self.ativo)
         print("[🧠] Modelo de IA treinado com sucesso!")
@@ -66,41 +65,30 @@ class BotIQ:
         thread.start()
 
     def estrategia_avancada(self, velas):
-        # Converte as velas para um DataFrame pandas
         df_velas = pd.DataFrame(velas)
-        df_velas["timestamp"] = pd.to_datetime(df_velas["from"], unit="s") # Usar \'from\' para timestamp da vela
+        df_velas["timestamp"] = pd.to_datetime(df_velas["from"], unit="s")
         df_velas = df_velas.set_index("timestamp")
 
-        # Calcula as features usando o FeatureEngineer
-        # Apenas as últimas velas são necessárias para prever a próxima
-        # Certifique-se de que o DataFrame tem as colunas esperadas pelo FeatureEngineer
-        # (open, close, high, low, volume)
-        
-        # Para evitar problemas com dados insuficientes para o cálculo de indicadores
-        # vamos garantir que temos pelo menos o número de velas necessárias para o maior período de indicador (26 para MACD)
         if len(df_velas) < 26:
-            return None # Não há velas suficientes para calcular os indicadores
+            return None
 
-        # Calcula as features para a última vela
         processed_data = self.feature_engineer.calculate_ema(df_velas.copy())
         processed_data = self.feature_engineer.calculate_rsi(processed_data)
         processed_data = self.feature_engineer.calculate_macd(processed_data)
         processed_data = self.feature_engineer.calculate_bollinger_bands(processed_data)
         processed_data = self.feature_engineer.calculate_atr(processed_data)
-        
-        # Pega a última linha (features da vela mais recente) e remove NaNs
-        features_for_prediction = processed_data.iloc[-1].drop([col for col in processed_data.columns if col in ["open", "close", "high", "low", "volume", "asset", "future_close", "target"] or pd.isna(processed_data.iloc[-1][col])])
-        
-        # Converte para DataFrame com uma única linha para a previsão
-        features_for_prediction = pd.DataFrame([features_for_prediction])
 
-        # Faz a previsão usando o modelo de IA
+        features_for_prediction = processed_data.iloc[-1].drop(
+            [col for col in processed_data.columns if col in ["open", "close", "high", "low", "volume", "asset", "future_close", "target"] or pd.isna(processed_data.iloc[-1][col])]
+        )
+
+        features_for_prediction = pd.DataFrame([features_for_prediction])
         prediction = self.ai_model.predict(features_for_prediction)
 
         if prediction is not None:
-            if prediction[0] == 1: # 1 para \'call\'
+            if prediction[0] == 1:
                 return "call"
-            elif prediction[0] == 0: # 0 para \'put\'
+            elif prediction[0] == 0:
                 return "put"
         return None
 
@@ -111,9 +99,8 @@ class BotIQ:
                 self.api.connect()
                 continue
 
-            # Obter mais velas para garantir dados suficientes para features
-            velas = self.api.get_candles(self.ativo, 60, 60, time.time()) # Pega 60 velas de 60 segundos
-            self.data_collector.save_candles(velas, self.ativo) # Salva as velas
+            velas = self.api.get_candles(self.ativo, 60, 60, time.time())
+            self.data_collector.save_candles(velas, self.ativo)
 
             direcao = self.estrategia_avancada(velas)
 
@@ -125,11 +112,10 @@ class BotIQ:
                     if status:
                         resultado = self.api.check_win_v3(id)
                         self.lucro_total += resultado
-                        
-                        # Coleta de dados da operação
+
                         timestamp_trade = int(time.time())
-                        entry_price = velas[-1][\'close\'] # Preço de entrada pode ser o fechamento da última vela
-                        exit_price = entry_price + resultado # Simplificado, precisa ser mais preciso
+                        entry_price = velas[-1]['close']
+                        exit_price = entry_price + resultado
                         win = 1 if resultado > 0 else 0
                         self.data_collector.save_trade(timestamp_trade, self.ativo, direcao, entry_price, exit_price, valor, resultado, win)
 
@@ -157,7 +143,7 @@ class BotIQ:
 
     def parar_bot(self):
         self.parar = True
-        self.data_collector.close() # Fecha a conexão com o banco de dados
+        self.data_collector.close()
         self.feature_engineer.close()
 
     def status(self):
@@ -168,51 +154,50 @@ class BotIQ:
             "ultima_ordem": self.ultima_ordem
         }
 
-
 def save_config(config):
-    with open(\'config.json\', \'w\') as f:
+    with open('config.json', 'w') as f:
         json.dump(config, f, indent=4)
 
 def load_config():
-    if os.path.exists(\'config.json\'):
-        with open(\'config.json\', \'r\') as f:
+    if os.path.exists('config.json'):
+        with open('config.json', 'r') as f:
             return json.load(f)
     return None
 
 if __name__ == "__main__":
     config = load_config()
     if config:
-        email = config[\'email\']
-        senha = config[\'senha\']
-        conta_real = config[\'conta_real\']
-        valor_entrada = config[\'valor_entrada\']
-        meta = config[\'meta\']
-        stop = config[\'stop\']
-        max_gale = config[\'max_gale\']
-        martingale = config[\'martingale\']
+        email = config['email']
+        senha = config['senha']
+        conta_real = config['conta_real']
+        valor_entrada = config['valor_entrada']
+        meta = config['meta']
+        stop = config['stop']
+        max_gale = config['max_gale']
+        martingale = config['martingale']
         print("[⚙️] Configurações carregadas do arquivo config.json.")
     else:
         print("\n[👋] Bem-vindo ao Robô Trader Autônomo com IA!")
         email = input("Digite seu email da IQ Option: ")
         senha = input("Digite sua senha da IQ Option: ")
         conta_real_str = input("Usar conta REAL? (s/n): ").lower()
-        conta_real = True if conta_real_str == \'s\' else False
+        conta_real = True if conta_real_str == 's' else False
         valor_entrada = float(input("Digite o valor de entrada por operação: "))
         meta = float(input("Digite sua meta de lucro: "))
         stop = int(input("Digite seu stop de derrotas consecutivas: "))
         max_gale = int(input("Digite o número máximo de Martingales: "))
         martingale_str = input("Usar Martingale? (s/n): ").lower()
-        martingale = True if martingale_str == \'s\' else False
+        martingale = True if martingale_str == 's' else False
 
         save_config({
-            \'email\': email,
-            \'senha\': senha,
-            \'conta_real\': conta_real,
-            \'valor_entrada\': valor_entrada,
-            \'meta\': meta,
-            \'stop\': stop,
-            \'max_gale\': max_gale,
-            \'martingale\': martingale
+            'email': email,
+            'senha': senha,
+            'conta_real': conta_real,
+            'valor_entrada': valor_entrada,
+            'meta': meta,
+            'stop': stop,
+            'max_gale': max_gale,
+            'martingale': martingale
         })
         print("[⚙️] Configurações salvas em config.json.")
 
@@ -223,18 +208,15 @@ if __name__ == "__main__":
             while True:
                 time.sleep(1)
                 current_status = bot.status()
-                os.system(\'cls\' if os.name == \'nt\' else \'clear\') # Limpa o console
-                print(f"[📊] Lucro Total: R$ {current_status[\'lucro_total\']:.2f}")
-                print(f"[✅] Vitórias: {current_status[\'vitorias\']}")
-                print(f"[❌] Derrotas: {current_status[\'derrotas\']}")
-                print(f"[💬] Última Ordem: {current_status[\'ultima_ordem\']}")
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(f"[📊] Lucro Total: R$ {current_status['lucro_total']:.2f}")
+                print(f"[✅] Vitórias: {current_status['vitorias']}")
+                print(f"[❌] Derrotas: {current_status['derrotas']}")
+                print(f"[💬] Última Ordem: {current_status['ultima_ordem']}")
                 print("\n[🤖] Robô em operação. Pressione Ctrl+C para parar.")
-                
         except KeyboardInterrupt:
             print("\n[🛑] Parando o robô...")
             bot.parar_bot()
             print("[✅] Robô parado.")
     else:
         print("[❌] Não foi possível iniciar o robô devido a falha de login.")
-
-
