@@ -2,3 +2,7 @@ flask
 flask-cors
 git+https://github.com/Lu-Yi-Hsun/iqoptionapi.git
 numpy
+pandas
+sqlalchemy
+scikit-learn
+
